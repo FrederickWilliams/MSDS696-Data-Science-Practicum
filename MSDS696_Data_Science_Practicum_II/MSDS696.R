@@ -134,30 +134,118 @@ In Figure 2, we see the following:
 
 "
 
+"### Preprocessing the Data"
+
+"
+Before we start modelling the data, we should check if there are any missing values
+in the data which interfer which with the predictive model.
+"
+sum(is.na(HR_data))
+
+"
+We see that there are no missing values in the data after checking it, but we also
+would like to perform some data transformation. That is convert the type of some 
+columns into a proper format.
+"
+HR_data$Education <- as.factor(HR_data$Education)
+HR_data$EnvironmentSatisfaction <- as.factor(HR_data$EnvironmentSatisfaction)
+HR_data$JobInvolvement <- as.factor(HR_data$JobInvolvement)
+HR_data$JobLevel <- as.factor(HR_data$JobLevel)
+HR_data$JobSatisfaction <- as.factor(HR_data$JobSatisfaction)
+HR_data$StockOptionLevel <- as.factor(HR_data$StockOptionLevel)
+HR_data$PerformanceRating <- as.factor(HR_data$PerformanceRating)
+HR_data$RelationshipSatisfaction <- as.factor(HR_data$RelationshipSatisfaction)
+HR_data$WorkLifeBalance <- as.factor(HR_data$WorkLifeBalance)
+
+"
+Due to some columns only having a single value in their columns, we will remove them.
+"
+HR_data <- HR_data %>% select(-EmployeeCount, -StandardHours, -Over18)
+
+"### Feature Engineering"
+
+"
+Feature engineering can be defined as the science of extracting more information 
+from existing data. This newly extracted information can be used as input to our 
+prediction model (Bock, 2017). Thereby, creating the outcome to have more impact 
+than the model. Now based on my assumptions, we can create two features with 
+existing variables.
+
+1. Tenure per job: People who worked at several companies but only for a short period
+time usually leave the company early maybe for a change of pace or building up 
+enough experience through these companies to help them land a job at a major company.
+
+2. Years without Change: People who went through role or job level changes probably
+enjoy the thought of taking on more responsible task as they gain seniority within
+a company. This variable will see the years a employee went without kind of change 
+using the Role, Job Change and Promotion, as the metrics to determine change.
+"
+
+HR_data_feng <- HR_data
+
+HR_data_feng$TenurePerJob <- ifelse(HR_data_feng$NumCompaniesWorked!=0, HR_data_feng$TotalWorkingYears/HR_data_feng$NumCompaniesWorked,0)
+HR_data_feng$YearWithoutChange <- HR_data_feng$YearsInCurrentRole - HR_data_feng$YearsSinceLastPromotion
+HR_data_feng$YearsWithoutChange2 <- HR_data_feng$TotalWorkingYears - HR_data_feng$YearsSinceLastPromotion
+
+tenurePlot <- ggplot(HR_data_feng,aes(TenurePerJob))+geom_density()+facet_grid(~Attrition)
+changePlot <- ggplot(HR_data_feng,aes(YearWithoutChange))+geom_density()+facet_grid(~Attrition)
+change2Plot <- ggplot(HR_data_feng,aes(YearsWithoutChange2))+geom_density()+facet_grid(~Attrition)
+grid.arrange(tenurePlot,changePlot,change2Plot,ncol=2,bottom = "Figure 3")
+
+"
+In figure 3, we see that the Attrition variable does have an affect on these new features.
+"
+
+"### Logistic Regression"
+"
+Now we split the data into a 20% testing set and 80% training set with the `sample()` function
+which takes a vector as input; then you tell it how many samples to draw from that list ('R Function', 2019).
+`set.seed()` function which produces the same sample again and again. The purpose of creating two 
+sets of data is so the training set is the one on which we train and fit our model basically 
+to fit the parameters whereas test data is used only to assess performance of model (Shah, 2017).
+"
 
 
+library(caret)
+# Spliting the data
+set.seed(18)
+attr_training <- sample(nrow(HR_data), nrow(HR_data)*.8)
+train_attr <- HR_data %>% slice(attr_training)
+test_attr <- HR_data %>% slice(-attr_training)
+
+# Check the portion and percentage of Attrition in train data
+table(train_attr$Attrition)
+
+prop.table(table(train_attr$Attrition))
+
+"
+From the infomation displayed, we see that the data is imbalanced with Yes cases at 15%.
+However, we could to try to fix this imbalance sample by using up-sampling or 
+down-sampling techniques. Keep in mind, there are pros and cons when using those 
+techniques (Altini, 2015). With that in mind, we will try to make it balanced by 
+using an upsampling technique with `ovun.sample()` function from ROSE package (Analytics, 2019).
+"
+install.packages("ROSE")
+library(ROSE)
+library(brglm2)
+balanced_attr <- ovun.sample(Attrition ~ ., data = train_attr, method = "over",
+                              N = 996*2, seed = 1)$data
+table(balanced_attr$Attrition)
+
+"
+After balancing the data, we will perform our first Logistic Regression model 
+by using all the predictors in the formula.
+
+"
+log_regress <- glm(Attrition ~ ., family = "binomial", data = balanced_attr)
+summary(log_regress)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+glm(formula = Attrition ~ ., family = "binomial", data = train_attr, 
+    method = "detect_separation", linear_program = "dual")
+"
+The separation in the our model returned False so there extist no perfect separation
+"
 
 
 
