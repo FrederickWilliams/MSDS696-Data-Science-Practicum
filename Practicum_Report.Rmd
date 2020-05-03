@@ -1,8 +1,9 @@
 ---
 title: "Using Predictive Modeling to Analyze Employee Churn"
 author: "Frederick T. Williams"
-date: "April 21, 2020"
-output: pdf_document
+date: "April 30, 2020"
+output: html_document
+#output: html_notebook
 ---
 
 # Defining the Business Problem
@@ -25,7 +26,7 @@ and career development, and improved work-life balance to boost employee retenti
 
 The fact that employee churn has and will continue be an issue that companies face, 
 within this data science project I will be creating an model with the IBM dataset, 
-provided by [Kaggle] (https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset). 
+provided by [Kaggle](https://www.kaggle.com/pavansubhasht/ibm-hr-analytics-attrition-dataset). 
 In this analysis, I hope to use this dataset to build a model to predict when employees 
 are going to quit by understanding the main drivers of employee churn.
 
@@ -34,7 +35,7 @@ are going to quit by understanding the main drivers of employee churn.
 
 Let's import the dataset and make of a copy of the source file for this analysis.
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 setwd("C:/Users/frede/OneDrive - Regis University/MSDS_696/MSDS696_Data_Science_Practicum_II/")
 
 # Read Excel file
@@ -44,7 +45,7 @@ names(df_source)
 colnames(df_source)[1] <- "Age" # Renaming the column
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 # Making copy of the dataset
 library(data.table)
 HR_data <- copy(df_source)
@@ -54,7 +55,7 @@ HR_data <- copy(df_source)
 
 Let's look at the data and see how it is formatted before performing analysis
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 str(HR_data)
 ```
 
@@ -66,14 +67,15 @@ Now let us have a glimpse of the data but instead of using the `glimpse()` or
 can provide more detail about the data, such as the missing rate, complete rate, 
 and a mini histogram of each variable (Quinn & Waring, 2019).
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 #install.packages('skimr')
 library(skimr)
 skim(HR_data)
 ```
-From a glace of the mini histograms, it seems that several variables are tail-heavy. 
-So let's use the `hist()` function to have a better look at some of these variables.
-```{r, error=FALSE}
+
+From a glace of the mini histograms, it seems that several variables are tail-heavy. So let's use the `hist()` function to have a better look at some of these variables.
+
+```{r, error=FALSE,warning=FALSE}
 hist(HR_data$MonthlyIncome,main="Distribution for Monthly Income",xlab="Monthly Income",ylab="Count",col="green")
 
 hist(HR_data$DistanceFromHome,main="Distribution for Distance from Home ",xlab="Distance from Home",ylab="Count",col="grey")
@@ -85,7 +87,7 @@ hist(HR_data$Age,main="Distribution for Age",xlab="Age",ylab="Count",col=blues9)
 After looking at the MonthlyIncome, DistanceFromHome, and YearsAtCompany they do 
 show a right-skewed in their distributions. The distribution for Age also has normal distribution that looks slightly right-skewed with majority being in the age range of 30 to 40.
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 prop.table(table(HR_data$Gender)) #Percentage of Gender
 ```
 The table above show that 60% of the dataset gender is male.
@@ -93,21 +95,21 @@ The table above show that 60% of the dataset gender is male.
 Within our exploratory analysis, the Attrition column will be used as our target 
 variable. Before continuing out analysis of the data, we should find out the 
 distribution and percentage of the Attrition variable.
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 library(dplyr)
 library(magrittr)
 
 HR_data %>% group_by(Attrition) %>% summarise(Total = n()) %>% print()
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 library(ggplot2)
 
 ggplot(HR_data,aes(Attrition,fill=Attrition))+geom_bar() + ggtitle("Total Numbers of Attrition")
 
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 prop.table(table(HR_data$Attrition)) #Percentage of Attrition
 ```
 From the table above, we see approximately 16% of IBM employees are leaving
@@ -115,7 +117,7 @@ From the table above, we see approximately 16% of IBM employees are leaving
 Now that we have set the Attrition as our target variable, we can see how it 
 affects the other variables in the dataset. In order to reduce time producing 
 single graphs for these variables, we are going to use the `grid()` and `gridExtra()` functions to help arrange multiple grid-based plots on a page (Phiri, 2013).
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 library(grid)
 library(gridExtra)
 age_graph <- ggplot(HR_data,aes(Age,fill=Attrition))+geom_density()+facet_grid(~Attrition)
@@ -124,14 +126,15 @@ marital_graph <- ggplot(HR_data,aes(MaritalStatus,fill=Attrition))+geom_bar()
 business_graph <- ggplot(HR_data,aes(BusinessTravel,fill=Attrition))+geom_bar()
 grid.arrange(age_graph,gender_graph,marital_graph,business_graph,ncol=2, bottom = "Figure 1")
 ```
-In Figure 1, we see the following: 
-1.	Age: Most employees that leave IBM are around 30 years old.
-2.	Gender: We see that majority of separated employees are Male and that is due to our dataset being comprised of 60% Male.
-3.	Marital Status: Employees that are Single show the highest signs of Attrition, while Divorced employees are the lowest.
-4.	Business Travel: Among employee who leave IBM, most travel.
 
+In Figure 1, we see the following:
 
-```{r, error=FALSE}
+1. Age: Most employees that leave IBM are around 30 years old.
+2. Gender: We see that majority of separated employees are Male and that is due to our dataset being comprised of 60% Male.
+3. Marital Status: Employees that are Single show the highest signs of Attrition, while Divorced employees are the lowest.
+4. Business Travel: Among employee who leave IBM, most travel.
+
+```{r, error=FALSE,warning=FALSE}
 YAC_graph <- ggplot(HR_data,aes(YearsAtCompany,fill = Attrition))+geom_bar()
 YSP_graph <- ggplot(HR_data,aes(YearsSinceLastPromotion,fill = Attrition))+geom_bar()
 YCM_graph <- ggplot(HR_data,aes(YearsWithCurrManager,fill = Attrition))+geom_bar()
@@ -140,25 +143,27 @@ OT_graph<- ggplot(HR_data,aes(OverTime,fill=Attrition))+geom_bar()
 grid.arrange(YAC_graph,YSP_graph,YCM_graph,MTHincome_graph,OT_graph,ncol=2, bottom = "Figure 2")
 
 ```
-In Figure 2, we see the following: 
-5.	Years at Company: Employees who have been with IBM for <3 years make up a larger proportion of those quitting the company.
-6.	Years Since Last Promotion: Employees that have been recently promoted are making up a larger proportion of those who quit IBM.
-7.	Years With Current Manager: Newly hired managers are also a reason for employees to quit.
-8.	Monthly Income: We see higher levels of attrition among the lower segment of monthly income. 
-9.	Over Time: Employees who work overtime also have a larger proportion that are quitting.
+
+In Figure 2, we see the following:
+
+5. Years at Company: Employees who have been with IBM for <3 years make up a larger proportion of those quitting the company.
+6. Years Since Last Promotion: Employees that have been recently promoted are making up a larger proportion of those who quit IBM.
+7. Years With Current Manager: Newly hired managers are also a reason for employees to quit.
+8. Monthly Income: We see higher levels of attrition among the lower segment of monthly income. 
+9. Over Time: Employees who work overtime also have a larger proportion that are quitting.
 
 ### Preprocessing the Data
 
 Before we start modelling the data, we should check if there are any missing values
 in the data which interfer which with the predictive model.
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 sum(is.na(HR_data))
 ```
 We see that there are no missing values in the data after checking it, but we also
 would like to perform some data transformation. That is convert the type of some 
 columns into a proper format.
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 HR_data$Education <- as.factor(HR_data$Education)
 HR_data$EnvironmentSatisfaction <- as.factor(HR_data$EnvironmentSatisfaction)
 HR_data$JobInvolvement <- as.factor(HR_data$JobInvolvement)
@@ -171,7 +176,7 @@ HR_data$WorkLifeBalance <- as.factor(HR_data$WorkLifeBalance)
 ```
 
 Due to some columns only having a single value in their columns, we will remove them.
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 HR_data <- HR_data %>% select(-EmployeeCount, -StandardHours, -Over18)
 ```
 
@@ -192,17 +197,17 @@ enjoy the thought of taking on more responsible task as they gain seniority with
 a company. This variable will see the years a employee went without kind of change 
 using the Role, Job Change and Promotion, as the metrics to determine change.
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 HR_data_feng <- HR_data
 
 HR_data_feng$TenurePerJob <- ifelse(HR_data_feng$NumCompaniesWorked!=0, HR_data_feng$TotalWorkingYears/HR_data_feng$NumCompaniesWorked,0)
 HR_data_feng$YearWithoutChange <- HR_data_feng$YearsInCurrentRole - HR_data_feng$YearsSinceLastPromotion
 HR_data_feng$YearsWithoutChange2 <- HR_data_feng$TotalWorkingYears - HR_data_feng$YearsSinceLastPromotion
 
-tenurePlot <- ggplot(HR_data_feng,aes(TenurePerJob))+geom_density()+facet_grid(~Attrition)
-changePlot <- ggplot(HR_data_feng,aes(YearWithoutChange))+geom_density()+facet_grid(~Attrition)
-change2Plot <- ggplot(HR_data_feng,aes(YearsWithoutChange2))+geom_density()+facet_grid(~Attrition)
-grid.arrange(tenurePlot,changePlot,change2Plot,ncol=2,bottom = "Figure 3")
+TPJ_grapn <- ggplot(HR_data_feng,aes(TenurePerJob))+geom_density()+facet_grid(~Attrition)
+YWC_graph <- ggplot(HR_data_feng,aes(YearWithoutChange))+geom_density()+facet_grid(~Attrition)
+YWC2_graph <- ggplot(HR_data_feng,aes(YearsWithoutChange2))+geom_density()+facet_grid(~Attrition)
+grid.arrange(TPJ_grapn,YWC_graph,YWC2_graph,ncol=2,bottom = "Figure 3")
 
 ```
 
@@ -212,7 +217,7 @@ In figure 3, we see that the Attrition variable does have an affect on these new
 
 Now we split the data into a 20% testing set and 80% training set with the `sample()` function which takes a vector as input; then you tell it how many samples to draw from that list ('R Function', 2019). We also use the`set.seed()` function which produces the same sample again and again. The purpose of creating two 
 sets of data is so the training set is the one on which we train and fit our model basically to fit the parameters whereas test data is used only to assess performance of model (Shah, 2017).
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 library(caret)
 # Spliting the data
 set.seed(18)
@@ -221,12 +226,12 @@ train_attr <- HR_data %>% slice(attr_training)
 test_attr <- HR_data %>% slice(-attr_training)
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 # Check the portion and percentage of Attrition in train data
 table(train_attr$Attrition)
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 prop.table(table(train_attr$Attrition))
 ```
 From the infomation displayed, we see that the data is imbalanced with Yes cases at 15%.However, we could to try to fix this imbalance sample by using up-sampling or 
@@ -234,7 +239,7 @@ down-sampling techniques. Keep in mind, there are pros and cons when using those
 techniques (Altini, 2015). With that in mind, we will try to make it balanced by 
 using an upsampling technique with `ovun.sample()` function from ROSE package (Analytics, 2019).
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 #install.packages("ROSE")
 library(ROSE)
 library(brglm2)
@@ -244,14 +249,345 @@ table(balanced_attr$Attrition)
 ```
 After balancing the data, we will perform our first Logistic Regression model 
 by using all the predictors in the formula.
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 log_regress <- glm(Attrition ~ ., family = "binomial", data = balanced_attr)
 summary(log_regress)
 ```
 
-```{r, error=FALSE}
+```{r, error=FALSE,warning=FALSE}
 glm(formula = Attrition ~ ., family = "binomial", data = train_attr, 
     method = "detect_separation", linear_program = "dual")
 ```
 
-The separation in the our model returned False so there extist no perfect separation
+The separation in the our model returned False so there extist no perfect separation.
+
+Next, we will be doing a feature engineering by applying the `step()` function which is used for stepwise regression in order to fit regression models in which the choice of predictive variables are carried out by an automatic procedure (Kassambara, 2018). We will set the direction to backward so that it will iterate over the model, and remove the least contributive predictors.
+```{r, error=FALSE,warning=FALSE}
+bw_reg_model<- step(log_regress, direction = "backward", trace = FALSE)
+summary(bw_reg_model)
+
+```
+
+Now, we will check if multicollinearity exists in our model using  the `vif()` function, which 'calculates variance-inflation and generalized variance-inflation factors for linear, generalized linear, and other models' (Fox & Weisberg, 2019).
+In an article by Kassambara (2018), he explains that a high value of VIF indicates 
+the existence of multicollinearity and suggests dropping the highest value of VIF.
+```{r, error=FALSE,warning=FALSE}
+car::vif(bw_reg_model)
+```
+
+```{r, error=FALSE,warning=FALSE}
+#Recreating a formula with the highest VIF is dropped.
+bw_reg_model <- glm(formula = Attrition ~ Age + BusinessTravel + DailyRate + 
+                      DistanceFromHome + EducationField + EmployeeNumber + 
+                      EnvironmentSatisfaction + Gender + JobInvolvement + JobLevel +                       JobRole + JobSatisfaction + MaritalStatus + MonthlyIncome + 
+                      NumCompaniesWorked + OverTime + PercentSalaryHike +
+                      RelationshipSatisfaction + 
+                      StockOptionLevel + TotalWorkingYears + TrainingTimesLastYear +                       WorkLifeBalance + YearsAtCompany + YearsInCurrentRole +
+                      YearsSinceLastPromotion + 
+                      YearsWithCurrManager, family = "binomial", data= 
+                      balanced_attr)
+
+```
+
+
+```{r, error=FALSE,warning=FALSE}
+#Recalculate the VIF value.
+car::vif(bw_reg_model)
+```
+
+### Model Performance (Logistic Regression)
+
+After the highest value of VIF was dropped, our model is ready for predicting the `test_attr` dataset.
+```{r, error=FALSE,warning=FALSE}
+pd_model <- predict(bw_reg_model, test_attr, type = "response")
+
+pdm <- as.factor(ifelse(pd_model >= 0.5, "Yes", "No"))
+confusionMatrix(pdm, test_attr$Attrition, positive = "Yes")
+```
+
+### Random Forest 
+
+Next, we will look at Random Forest which is a ML Algorithm based on Decision Trees. Random Trees lies in one of those Class of ML Algorithms which does ensemble classification (Koehrsen, 2017). However, we first need to handle the data imbalance by using the `trainControl()`function which resamples a specific number of training 
+choices required by the `train()` function (Dalpiaz, 2019).Then, we will use the k-Fold Cross-Validation method in the `trainControl()` function by setting the method to `repeatedcv` and set the number to 5 and repeats to 3 (Dalpiaz, 2019).
+```{r, error=FALSE,warning=FALSE}
+upsample_data <- train(
+  Attrition ~., data = train_attr, method = "rf",
+  trControl = trainControl(method = "repeatedcv",
+                           number = 5,
+                           repeats = 3,
+                           sampling = "up",
+                           summaryFunction=twoClassSummary,
+                           classProbs=T)
+)
+```
+
+Afterwards, we can now visualize the `mtry` which refers to number of variables 
+available for splitting at each tree node (Brownlee, 2019).
+```{r, error=FALSE,warning=FALSE}
+upsample_data %>% ggplot()
+```
+
+Let us look at the detail and plot the `upsample_data`.
+```{r, error=FALSE,warning=FALSE}
+upsample_data
+```
+
+Here is a list of the top 20 important variables and a plot to show them.
+```{r, error=FALSE,warning=FALSE}
+varImp(upsample_data)
+```
+
+```{r, error=FALSE,warning=FALSE}
+varImp(upsample_data) %>% plot(20)
+```
+
+### Model Performance (Random Forest)
+
+Using the `upsample_data` model we made, we will predict using both `raw` as its typein the `predict()` function.
+```{r, error=FALSE,warning=FALSE}
+upsample_raw <- predict(upsample_data, test_attr, type = "raw")
+
+confusionMatrix(upsample_raw,test_attr$Attrition, positive = "Yes")
+```
+
+### Results
+
+We are going to focus on the sensitivity metic, which tells us when an employee is 
+going to leave/attrition. So let us see how accurately my classifier can predict.
+Looking at confusion matrices in both models show that Logistic Regression 
+is better to use. Meaning that the attrition for the sensitivity metric is 77% and 
+accuracy is 78%, which is better than Random Forest's sensitivity metric which 
+is 28%, although its accuracy is 84%
+
+## Modeling Employee Attrition with H2O
+
+We are going to use the `h2o.automl()` function from the H2O platform which is
+an open-source, distributed in-memory machine learning platform with linear 
+scalability (Cook, 2017). H2O also supports the most commonly used statistical 
+and machine learning algorithms.
+```{r, error=FALSE,warning=FALSE}
+#initializign the JVM that H2O uses locally.
+#install.packages("h2o")
+library(h2o)
+h2o.init()
+```
+
+```{r, error=FALSE,warning=FALSE}
+#Turn off output of progress bars
+h2o.no_progress() 
+```
+
+Next, in order for the h2o package to function on the data, we need change our data 
+by splitting the data into a train, validation, and test sets. Cook's (2017) suggested that when training data in H2O we should split the data into three parts 70%(train), 15%(validation), 15%(test). 
+
+```{r, error=FALSE,warning=FALSE}
+# Split data into Train/Validation/Test Sets
+h2o_data <- as.h2o(HR_data)
+set.seed(123)
+h2o_split <- h2o.splitFrame(h2o_data, c(0.7, 0.15), seed = 1234 )
+h2o_train <- h2o.assign(h2o_split[[1]], "train" ) 
+h2o_valid <- h2o.assign(h2o_split[[2]], "valid" ) 
+h2o_test  <- h2o.assign(h2o_split[[3]], "test" )  
+```
+
+### Modeling
+
+Now we in order to ready the model, we will set the target as Attrition which we want to predict and set feature names every other column that we will use to model our prediction.
+```{r, error=FALSE,warning=FALSE}
+# Set names for h2o
+target <- "Attrition"
+features <- setdiff(names(h2o_train), target)
+```
+
+Now we can use the `h2o.automl()` function with its respected arguments set in place
+to run the models against. 
+
+1. x = features: Feature columns.
+
+2. y = target: Target column.
+
+3. training_frame = h2o_train: The 70% of data that will be used for training.
+
+4. leaderboard_frame = h2o_valid:The 15% of data that will be used for validation. 
+Also to ensure that overfitting does not occur in the model, H2O uses the validation_set to solve that issue (Cook,2017).
+
+5. max_runtime_secs = 30: Due to the algoritm having a large number of complex models,
+we set this runtime to 30 so that it can speed up the process at the expense of 
+some accuracy.
+```{r, error=FALSE,warning=FALSE}
+# Run the automated machine learning 
+h2o_automl_models <- h2o.automl(
+  x = features, 
+  y = target,
+  training_frame    = h2o_train,
+  leaderboard_frame = h2o_valid,
+  max_runtime_secs  = 30
+)
+```
+
+The `h2o_automl_models` will store all the models, but primary focus will be on the
+best model in terms of accuracy on the validation set. Then have that models object 
+extracted.
+```{r, error=FALSE,warning=FALSE}
+# View the AutoML Leaderboard
+leaderboard_1 <- h2o_automl_models@leaderboard
+leaderboard_1
+```
+
+```{r, error=FALSE,warning=FALSE}
+lead_model<-h2o_automl_models@leader
+```
+
+### Predicting
+
+Now prediction can be made on the test set, which is not seen during the modeling process. In order to make predictions, we will use the `h2o.predict()` function to get a true test of performance.
+```{r, error=FALSE,warning=FALSE}
+# Predict on hold-out set, test_h2o
+h2o_prediction <- h2o.predict(object = lead_model, newdata = h2o_test)
+```
+
+### Performance
+
+Let us on evaluate `lead_model` by reformatting the test set and adding the 
+predictions as column. That way we can see both the actual column and prediction column.
+```{r, error=FALSE,warning=FALSE}
+#predictions on test set
+h2o_pdict<- predict(lead_model, h2o_test)
+head(h2o_pdict)
+```
+
+```{r, error=FALSE,warning=FALSE}
+#perfomance on test set
+h2o_perform <- h2o.performance(lead_model, h2o_test)
+print(h2o_perform)
+```
+
+```{r, error=FALSE,warning=FALSE}
+library(tibble)
+#Prepping for performance assessment
+performance_test <- h2o_test %>%
+  tibble::as_tibble() %>%
+  select(Attrition) %>%
+  add_column(predictions = as.vector(h2o_pdict$predict)) %>%
+  mutate_if(is.character, as.factor)
+performance_test
+```
+
+```{r, error=FALSE,warning=FALSE}
+#Building confusion matrix for test set
+h2o_cmtx <- h2o.confusionMatrix(h2o_perform)
+print(h2o_cmtx)
+```
+
+```{r, error=FALSE,warning=FALSE}
+h2o.precision(h2o_perform)
+```
+
+```{r, error=FALSE,warning=FALSE}
+h2o.accuracy(h2o_perform)
+```
+
+```{r, error=FALSE,warning=FALSE}
+h2o.auc(h2o_perform)
+```
+
+```{r, error=FALSE,warning=FALSE}
+h2o.auc(h2o_perform)
+```
+
+```{r, error=FALSE,warning=FALSE}
+#Plot ROC for test set
+plot(h2o_perform,type="roc")
+```
+
+Then using the `table()` function, we are able to get a quick look at the results via a confusion matrix.
+```{r, error=FALSE,warning=FALSE}
+# Confusion table counts
+c_mtx <- performance_test %>%
+  table() 
+c_mtx
+```
+
+From the table, we see the `lead_model` was not the best. Although, the tack of trying to identify which employees that are likely to quit, it did a decent job of that.
+
+Now we will see this model's performance by running a binary classification analysis.
+```{r, error=FALSE,warning=FALSE}
+# Performance analysis
+tn <- c_mtx[1]
+tp <- c_mtx[4]
+fp <- c_mtx[3]
+fn <- c_mtx[2]
+
+accuracy <- (tp + tn) / (tp + tn + fp + fn)
+misclassification_rate <- 1 - accuracy
+sensitivity <- tp / (tp + fn)
+precision <- tp / (tp + fp)
+null_error_rate <- tn / (tp + tn + fp + fn)
+
+tibble(
+  paste("accuracy: ",accuracy),
+  paste("misclassification_rate: ", misclassification_rate),
+  paste("sensitivity: ", sensitivity),
+  paste("precision: ", precision),
+  paste("null_error_rate: ", null_error_rate)
+) %>% 
+  transpose() 
+
+```
+
+## Conclusion
+
+The autoML algorithm from worked well for classifying attrition with an 
+accuracy around the high 80 percentile on the unmodeled dataset. 
+
+
+
+## References
+
+Altini, M. (2015, August 17). Dealing with imbalanced data: undersampling, oversampling and proper cross-validation. Retrieved April 14, 2020, from https://www.marcoaltini.com/blog/dealing-with-imbalanced-data-undersampling-oversampling-and-proper-cross-validation
+
+Analytics , V. (Ed.). (2019, June 24). Practical Guide to deal with Imbalanced Classification Problems in R. Retrieved April 14, 2020, from https://www.analyticsvidhya.com/blog/2016/03/practical-guide-deal-imbalanced-classification-problems/
+
+Ashe-Edmunds, S. (2017, November 21). Retention vs. Replacement for Employees. Retrieved April 07, 2020, from https://work.chron.com/retention-vs-replacement-employees-22865.html
+
+Bendemra, H. (2019, March 11). Building an Employee Churn Model in Python to Develop a Strategic Retention Plan. Retrieved March 16, 2020, from https://towardsdatascience.com/building-an-employee-churn-model-in-python-to-develop-a-strategic-retention-plan-57d5bd882c2d
+
+Bock, T. (2018, October 25). What is Feature Engineering? Retrieved April 10, 2020, from https://www.displayr.com/what-is-feature-engineering/
+
+Brownlee, J. (2019, August 08). A Gentle Introduction to k-fold Cross-Validation. Retrieved May 26, 2020, from https://machinelearningmastery.com/k-fold-cross-validation/
+
+Brownlee, J. (2019, August 22). Tune Machine Learning Algorithms in R (random forest case study). Retrieved April 27, 2020, from https://machinelearningmastery.com/tune-machine-learning-algorithms-in-r/
+
+Cook, D. (2017). Practical machine learning with H2O powerful, scalable techniques for deep learning and AI. Seabastopol, CA: O'Reilly Media.
+
+Dalpiaz, D. (2019, March 22). R for Statistical Learning. Retrieved April 26, 2020, from https://daviddalpiaz.github.io/r4sl/the-caret-package.html
+
+Fox, J., & Weisberg, S. (2019). An R companion to applied regression (3rd ed.). Thousand Oaks, CA: SAGE Publications.
+
+Kassambara, A. (2018, March 11). Stepwise Regression Essentials in R. Retrieved April 27, 2020, from http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/154-stepwise-regression-essentials-in-r/
+
+Kassambara, A. (2018, March 11). Multicollinearity Essentials and VIF in R. Retrieved April 27, 2020, from http://www.sthda.com/english/articles/39-regression-model-diagnostics/160-multicollinearity-essentials-and-vif-in-r/
+
+Koehrsen, W. (2017, December 27). Random Forest Simple Explanation. Retrieved April 26, 2020, from https://medium.com/@williamkoehrsen/random-forest-simple-explanation-377895a60d2d
+
+Kolowich, L. (2018, February 26). Why Are Your Employees Leaving The Organization (And How to Make Them Stay). Retrieved April 07, 2020, from https://blog.hubspot.com/agency/why-employees-leave
+
+Kosmidis, I., & Schumacher, D. (2020, January 5). Detect/check for separation and infinite maximum likelihood estimates in logistic regression. Retrieved April 19, 2020, from https://cran.r-project.org/web/packages/detectseparation/vignettes/separation.html
+
+Kuhn, M. (2019, March 27). The caret Package. Retrieved April 13, 2020, from https://topepo.github.io/caret/
+
+Law, R. (2019, May 28). Churn Rate: How High is Too High? A Meta-Analysis of Churn Studies. Retrieved April 07, 2020, from https://www.cobloom.com/blog/churn-rate-how-high-is-too-high
+
+Phiri, L. (2013, February 13). Ggplot2 - Multiple Plots in One Graph Using gridExtra. Retrieved April 09, 2020, from https://lightonphiri.org/blog/ggplot2-multiple-plots-in-one-graph-using-gridextra
+
+Quinn, M., & Waring, E. (2019, October 29). (Re)introducing skimr v2 - A year in the life of an open source R project - rOpenSci - open tools for open science. Retrieved April 08, 2020, from https://ropensci.org/blog/2019/10/29/skimrv2/
+
+R Function of the Day: sample. (2010, May 23). Retrieved April 16, 2020, from https://www.r-bloggers.com/r-function-of-the-day-sample-2/
+
+Regan, R. (2020, March 17). 10 Clever Employee Retention Strategies in 2020. Retrieved April 07, 2020, from https://connecteam.com/employee-retention-strategies/
+
+Shah, T. (2017, December 10). About Train, Validation and Test Sets in Machine Learning. Retrieved April 14, 2020, from https://towardsdatascience.com/train-validation-and-test-sets-72cb40cba9e7
+
+Sirohi, K. (2018, December 29). Simply Explained Logistic Regression with Example in R. Retrieved April 19, 2020, from https://towardsdatascience.com/simply-explained-logistic-regression-with-example-in-r-b919acb1d6b3
+
+Xu, N. [Data Science Dojo]. (2018, January 24). Feature Engineering | Introduction to dplyr Part 4 [Video File]. Retrieved from https://youtu.be/nVnAcE-BGvA
